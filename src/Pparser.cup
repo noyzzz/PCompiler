@@ -1,0 +1,104 @@
+terminal ID, EXTERN, LBRAC, RBRAC, INT, BOOL, FLOAT, LONG, CHAR, DOUBLE, STRING, VOID, AUTO, BEGIN;
+terminal END, RECORD, CONST, RETURN, BREAK, CONTINUE, SIZEOF, IF, ELSE, SWITCH, OF, CASE, INT_CONST;
+terminal DEFAULT, FOR, REPEAT, UNTIL, FOREACH, IN, REAL_CONST, CHAR_CONST, BOOL_CONST, STRING_CONST;
+terminal SEMICOLON;
+terminal LONG_CONST;
+terminal LPAR, RPAR;
+terminal PLUS, MINUS, TIMES, SLASH, MOD, AMPERSAND, PIPE, CARET;
+terminal ISEQUAL, NOTEQUAL, LEQ, GEQ, LESS, GREATER, AND, OR, NOT;
+terminal EQUAL;
+terminal TILDE, MINUSMINUS, PLUSPLUS, EXCLAM;
+terminal COMMA;
+terminal COLON;
+terminal LBRACE, RBRACE;
+nonterminal program;
+nonterminal func_extern;
+nonterminal func_dcl;
+nonterminal extern_dcl;
+nonterminal arguments;
+nonterminal type;
+nonterminal struct_dec;
+nonterminal var_dcl;
+nonterminal var_dcl_cnt;
+nonterminal block;
+nonterminal statement;
+nonterminal assignment;
+nonterminal method_call;
+nonterminal parameters;
+nonterminal cond_stmt;
+nonterminal loop_stmt;
+nonterminal expr;
+nonterminal variable;
+nonterminal binary_op;
+nonterminal arithmatic;
+nonterminal conditional;
+nonterminal const_val;
+nonterminal idarray;
+nonterminal var_dcls;
+nonterminal var_dcl_no_const;
+nonterminal var_dcl_cnt_extend;
+nonterminal var_dcls_or_statements;
+nonterminal switch_case_cases;
+nonterminal var_dcl_epsilon;
+nonterminal assignment_expr_epsilon;
+nonterminal array_index_recursive;
+nonterminal brac;
+terminal UMINUS;
+nonterminal variable_prime;
+terminal COMMENT;
+/* Precedences */
+
+precedence right EQUAL;
+precedence left PIPE;
+precedence left CARET;
+precedence left AMPERSAND;
+precedence left ISEQUAL, NOTEQUAL;
+precedence left AND, OR;
+precedence left LEQ,LESS, GEQ, GREATER;
+precedence left PLUS, MINUS;
+precedence left TIMES, SLASH, MOD;
+precedence right EXCLAM;
+precedence left  LBRAC, RBRAC, LPAR, RPAR;
+precedence right PLUSPLUS, MINUSMINUS, NOT, TILDE;
+precedence left UMINUS;
+program ::= var_dcl | func_extern | struct_dec | var_dcl program | func_dcl program | struct_dec program;
+func_extern ::= func_dcl | extern_dcl;
+func_dcl ::= type ID LPAR RPAR SEMICOLON | type ID LPAR arguments RPAR SEMICOLON | type ID LPAR RPAR block
+| type ID LPAR arguments RPAR block;
+extern_dcl ::= EXTERN type ID SEMICOLON ;
+brac ::= LBRAC RBRAC brac | LBRAC RBRAC;
+idarray ::=  | brac;
+arguments ::= type ID idarray | type ID idarray COMMA arguments ;
+type ::= INT | BOOL | FLOAT | LONG | CHAR | DOUBLE | ID | STRING | VOID | AUTO;
+struct_dec ::= RECORD ID BEGIN var_dcls END RECORD SEMICOLON;
+var_dcls ::= var_dcl | var_dcl var_dcls;
+var_dcl_no_const ::= type var_dcl_cnt SEMICOLON | type var_dcl_cnt var_dcl_cnt_extend SEMICOLON ;
+var_dcl_cnt_extend ::= COMMA var_dcl_cnt var_dcl_cnt_extend | COMMA var_dcl_cnt;
+var_dcl ::= var_dcl_no_const | CONST var_dcl_no_const;
+var_dcl_cnt ::= variable_prime | variable_prime EQUAL expr;
+variable_prime ::= ID| ID array_index_recursive;
+block ::= BEGIN END |BEGIN var_dcls_or_statements END ;
+var_dcls_or_statements ::= var_dcl var_dcls_or_statements | statement var_dcls_or_statements
+| var_dcl | statement;
+statement ::= assignment | method_call SEMICOLON| cond_stmt | loop_stmt | RETURN SEMICOLON
+| RETURN expr SEMICOLON| BREAK SEMICOLON | CONTINUE SEMICOLON | SIZEOF LPAR type RPAR;
+assignment ::= variable EQUAL expr;
+method_call ::= ID LPAR RPAR | ID LPAR parameters RPAR;
+parameters ::= expr | expr COMMA  parameters;
+switch_case_cases ::= CASE INT_CONST COLON block switch_case_cases | CASE INT_CONST COLON block;
+cond_stmt ::= IF LPAR expr RPAR block  | IF LPAR expr RPAR block  ELSE  block
+| SWITCH LPAR ID RPAR OF COLON LBRACE DEFAULT COLON block RBRACE |
+SWITCH LPAR ID RPAR OF COLON LBRACE switch_case_cases DEFAULT COLON block RBRACE;
+var_dcl_epsilon ::=  | var_dcl;
+assignment_expr_epsilon::= assignment | | expr;
+loop_stmt ::= FOR LPAR var_dcl_epsilon SEMICOLON expr SEMICOLON assignment_expr_epsilon RPAR block |
+REPEAT block UNTIL LPAR expr RPAR SEMICOLON | FOREACH LPAR ID IN ID RPAR block;
+expr ::= expr binary_op expr | LPAR expr RPAR | method_call | variable | const_val | MINUS expr %prec UMINUS|
+ EXCLAM expr;
+variable ::= ID| ID array_index_recursive |
+TILDE variable | MINUSMINUS variable | PLUSPLUS variable | variable MINUSMINUS | variable PLUSPLUS ;
+array_index_recursive ::= LBRAC expr RBRAC | LBRAC expr RBRAC  array_index_recursive;
+binary_op ::= arithmatic | conditional;
+arithmatic ::= PLUS | MINUS | TIMES | SLASH | MOD | AMPERSAND | PIPE | CARET;
+conditional ::= ISEQUAL | NOTEQUAL | GEQ | LEQ | LESS | GREATER | AND | OR |  NOT;
+const_val ::= INT_CONST | REAL_CONST | CHAR_CONST | BOOL_CONST | STRING_CONST | LONG_CONST;
