@@ -1,24 +1,33 @@
 import java_cup.runtime.*;
 import java.util.*;
-import syntaxtree.*;
-import visitor.*;
-import helper.*;
-
+import java.io.BufferedReader;
+import java.io.*;
 parser code {:
     // Connect this parser to a scanner!
-   Plexer s;
-    Pparser(Plexer s){ this.s=s; }
+    Plexer s;
+    parser(Plexer s){ this.s=s; }
+        public static void main(String[] args) throws Exception {
+            ComplexSymbolFactory csf = new ComplexSymbolFactory();
+            InputStream inputStream       = new FileInputStream("input.in");
+            Plexer plexer = new Plexer(new BufferedReader(new InputStreamReader(inputStream)),csf);
+            ScannerBuffer lexer = new ScannerBuffer
+                    (plexer);
+            parser p = new parser(plexer);
+
+            p.parse();
+    /*        Reader br = new BufferedReader(new InputStreamReader(System.in));;
+            Plexer plexer = new Plexer(br,new ComplexSymbolFactory());
+            parser parser = new parser(plexer, new ComplexSymbolFactory());
+            parser.parse();*/
+        }
 :}
-
-/* define how to connect to the scanner! */
-init with {: s.init(); :};
 scan with {: return s.next_token(); :};
-
 terminal ID, EXTERN, LBRAC, RBRAC, INT, BOOL, FLOAT, LONG, CHAR, DOUBLE, STRING, VOID, AUTO, BEGIN;
 terminal END, RECORD, CONST, RETURN, BREAK, CONTINUE, SIZEOF, IF, ELSE, SWITCH, OF, CASE, INT_CONST;
 terminal DEFAULT, FOR, REPEAT, UNTIL, FOREACH, IN, REAL_CONST, CHAR_CONST, BOOL_CONST, STRING_CONST;
 terminal SEMICOLON;
 terminal LONG_CONST;
+terminal INPUT, FUNCTION, OUTPUT, STATIC, GOTO, INT_TYPE;
 terminal LPAR, RPAR;
 terminal PLUS, MINUS, TIMES, SLASH, MOD, AMPERSAND, PIPE, CARET;
 terminal ISEQUAL, NOTEQUAL, LEQ, GEQ, LESS, GREATER, AND, OR, NOT;
@@ -77,7 +86,7 @@ precedence right EXCLAM;
 precedence left  LBRAC, RBRAC, LPAR, RPAR;
 precedence right PLUSPLUS, MINUSMINUS, NOT, TILDE;
 precedence left UMINUS;
-program ::= var_dcl | func_extern | struct_dec | var_dcl program | func_dcl program | struct_dec program;
+program ::= var_dcl{:System.out.println("var_dcl found");:} | func_extern | struct_dec | var_dcl program | func_dcl program | struct_dec program;
 func_extern ::= func_dcl | extern_dcl;
 func_dcl ::= type ID LPAR RPAR SEMICOLON | type ID LPAR arguments RPAR SEMICOLON | type ID LPAR RPAR block
 | type ID LPAR arguments RPAR block;
@@ -85,14 +94,15 @@ extern_dcl ::= EXTERN type ID SEMICOLON ;
 brac ::= LBRAC RBRAC brac | LBRAC RBRAC;
 idarray ::=  | brac;
 arguments ::= type ID idarray | type ID idarray COMMA arguments ;
-type ::= INT | BOOL | FLOAT | LONG | CHAR | DOUBLE | ID | STRING | VOID | AUTO;
+type ::= INT{:System.out.println("TYPE ");:} | BOOL | FLOAT | LONG | CHAR | DOUBLE | ID | STRING | VOID | AUTO;
 struct_dec ::= RECORD ID BEGIN var_dcls END RECORD SEMICOLON;
 var_dcls ::= var_dcl | var_dcl var_dcls;
-var_dcl_no_const ::= type var_dcl_cnt SEMICOLON | type var_dcl_cnt var_dcl_cnt_extend SEMICOLON ;
+var_dcl_no_const ::= type var_dcl_cnt SEMICOLON {:System.out.println("var dcl cnt no const!!");:}|
+type var_dcl_cnt var_dcl_cnt_extend SEMICOLON ;
 var_dcl_cnt_extend ::= COMMA var_dcl_cnt var_dcl_cnt_extend | COMMA var_dcl_cnt;
 var_dcl ::= var_dcl_no_const | CONST var_dcl_no_const;
-var_dcl_cnt ::= variable_prime | variable_prime EQUAL expr;
-variable_prime ::= ID| ID array_index_recursive;
+var_dcl_cnt ::= variable_prime : a{:System.out.println(a);:} | variable_prime EQUAL expr;
+variable_prime ::= ID: a {:System.out.println("variable prime "); RESULT = a; :}| ID array_index_recursive;
 block ::= BEGIN END |BEGIN var_dcls_or_statements END ;
 var_dcls_or_statements ::= var_dcl var_dcls_or_statements | statement var_dcls_or_statements
 | var_dcl | statement;

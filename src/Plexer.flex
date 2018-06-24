@@ -1,21 +1,32 @@
 import java.io.*;
 import java_cup.runtime.*;
-
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.Location;
 
 %%
 %{
-      private Symbol symbol(String name, int sym) {
+        StringBuffer string = new StringBuffer();
+        public Plexer(java.io.Reader in, ComplexSymbolFactory sf){
+    	this(in);
+    	symbolFactory = sf;
+        }
+        ComplexSymbolFactory symbolFactory;
+
+      public Symbol symbol(String name, int sym) {
           return symbolFactory.newSymbol(name, sym, new Location(yyline+1,yycolumn+1,yychar), new Location(yyline+1,yycolumn+yylength(),yychar+yylength()));
       }
 
-      private Symbol symbol(String name, int sym, Object val) {
+      public Symbol symbol(String name, int sym, Object val) {
           Location left = new Location(yyline+1,yycolumn+1,yychar);
           Location right= new Location(yyline+1,yycolumn+yylength(), yychar+yylength());
           return symbolFactory.newSymbol(name, sym, left, right,val);
       }
 %}
-
+%eofval{
+     return symbolFactory.newSymbol("EOF", EOF, new Location(yyline+1,yycolumn+1,yychar), new Location(yyline+1,yycolumn+1,yychar+1));
+%eofval}
 %cup
+%implements sym
 %public
 %class Plexer
 %type Symbol
@@ -34,22 +45,20 @@ NormalCharacter = \'[^\\]\'
 SpecialCharacter = \'[\\][^]\'
 %state STRING
 
+
 %%
 
 <YYINITIAL>{
 /* keywords */
-{LineComment}          {/**/}
-{BigComment}           {/**/}
+
 /* names */
-{Identifier}           { return symbol("Identifier",ID, yytext()); }
 
 /* bool literal */
-{BoolLiteral} { return symbol("boolconst",BOOL_CONST, new Boolean(Boolean.parseBool(yytext()))); }
 
 /* literals */
 {DecIntegerLiteral} { return symbol("intconst",INT_CONST, new Integer(Integer.parseInt(yytext()))); }
 {NormalCharacter}                     {return symbol("character",CHAR_CONST,new Character(yytext().charAt(1)));}
-{SpecialCharacter}                     {return symbol("character",CHAR_CONST,new Character(yytext()));}
+{SpecialCharacter}                     {return symbol("character",CHAR_CONST,new Character(yytext().charAt(0)));}
     /* Keywords */
     "begin"                         {return symbol("begin",BEGIN);}
     "bool"                          {return symbol("bool",BOOL);}
@@ -63,14 +72,13 @@ SpecialCharacter = \'[\\][^]\'
     "else"                          {return symbol("else",ELSE);}
     "end"                           {return symbol("end",END);}
     "extern"                        {return symbol("extern",EXTERN);}
-    "false"                         {return symbol("false",FALSE);}
     "function"                      {return symbol("function",FUNCTION);}
     "float"                         {return symbol("float",FLOAT);}
     "for"                           {return symbol("for",FOR);}
     "goto"                          {return symbol("goto",GOTO);}
     "if"                            {return symbol("if",IF);}
     "input"                         {return symbol("input",INPUT);}
-    "int"                           {return symbol("int",INT, new Integer( INTTYPE ));}
+    "int"                           {return symbol("int",INT, new Integer( INT_TYPE ));}
     "long"                          {return symbol("long",LONG);}
     "output"                        {return symbol("output",OUTPUT);}
     "return"                        {return symbol("return",RETURN);}
@@ -79,7 +87,6 @@ SpecialCharacter = \'[\\][^]\'
     "static"                        {return symbol("static",STATIC);}
     "string"                        {return symbol("string",STRING);}
     "switch"                        {return symbol("switch",SWITCH);}
-    "true"                          {return symbol("true",TRUE);}
     "repeat"                          {return symbol("repeat",REPEAT);}
 
 
@@ -109,18 +116,25 @@ SpecialCharacter = \'[\\][^]\'
     ")"                             {return symbol("rpar", RPAR);}
     ","                             {return symbol("comma", COMMA);}
     ":"                             {return symbol("colon", COLON);}
-    ";"                             {return symbol("semicolon", SEMICOLON);}
-    "["                             {return symbol("openingBrace", OPENINGBRACE);}
-    "]"                             {return symbol("closingBrace", CLOSINGBRACE);}
+    ";"                             { return symbol("semicolon", SEMICOLON);}
+    "["                             {return symbol("lbrac", LBRAC);}
+    "]"                             {return symbol("rbrac", RBRAC);}
+
 
 
 {white_space}     { /* ignore */ }
+{BoolLiteral} { return symbol("boolconst",BOOL_CONST, new Boolean(Boolean.parseBoolean(yytext()))); }
+
+{LineComment}          {/**/}
+{BigComment}           {/**/}
+\"                              {string.setLength(0); yybegin(STRING);}
+{Identifier}           {  return symbol("Identifier",ID, yytext()); }
 
 }
 
 <STRING> {
   \"                             { yybegin(YYINITIAL);
-      return symbol("StringConst",STRINGCONST,string.toString(),string.length()); }
+      return symbol("StringConst",STRING_CONST,string.toString()); }
   [^\n\r\"\\]+                   { string.append( yytext() ); }
   \\t                            { string.append('\t'); }
   \\n                            { string.append('\n'); }
