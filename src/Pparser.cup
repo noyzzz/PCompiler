@@ -1,3 +1,19 @@
+import java_cup.runtime.*;
+import java.util.*;
+import syntaxtree.*;
+import visitor.*;
+import helper.*;
+
+parser code {:
+    // Connect this parser to a scanner!
+   Plexer s;
+    Pparser(Plexer s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+init with {: s.init(); :};
+scan with {: return s.next_token(); :};
+
 terminal ID, EXTERN, LBRAC, RBRAC, INT, BOOL, FLOAT, LONG, CHAR, DOUBLE, STRING, VOID, AUTO, BEGIN;
 terminal END, RECORD, CONST, RETURN, BREAK, CONTINUE, SIZEOF, IF, ELSE, SWITCH, OF, CASE, INT_CONST;
 terminal DEFAULT, FOR, REPEAT, UNTIL, FOREACH, IN, REAL_CONST, CHAR_CONST, BOOL_CONST, STRING_CONST;
